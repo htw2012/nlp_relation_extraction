@@ -33,55 +33,54 @@ pos_embedding_dims=80
 use_pretrain=False
 relation_dim=80
 
-
+# step1. build sentence embedding
+print("step1. build sentence embedding")
 input = Input(shape=(maxlen,))
 print("input-shape", input._keras_shape)
-
 if use_pretrain:
-    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/",
-                                           dim=embedding_dims, max_vocab=max_features)
+    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/", dim=embedding_dims, max_vocab=max_features)
     we = Embedding(max_features, embedding_dims, input_length=maxlen, weights=[embedding_matrix], trainable=True)(input)
 else:
     we = Embedding(max_features, embedding_dims, input_length=maxlen, )(input)
-
 print("after embedding", we._keras_shape)  # ((None, 400), 400, 50) # (None, 400, 50)
 e1pos_input = Input(shape=(maxlen,))
 max_pos_features = 2*maxlen+2
 pos_we = Embedding(max_pos_features, pos_embedding_dims, input_length=maxlen)
-
 entity1_pos_we = pos_we(e1pos_input)
 print("entity1_pos_we", entity1_pos_we._keras_shape)
-
 e2pos_input = Input(shape=(maxlen,))
 entity2_pos_we = pos_we(e2pos_input)
 print("entity2_pos_we", entity2_pos_we._keras_shape)
-
 sentence_we = concatenate([we, entity1_pos_we, entity2_pos_we], axis=-1) # this is matrix S
 print("sentence_we", sentence_we._keras_shape) # shape=(?, 85, 460)
 
+# step2. build relation embedding
+print("step2. build relation embedding")
 relation_input = Input(shape=(1,))
 relation_we = Embedding(num_class, relation_dim, input_length=1)
 r = relation_we(relation_input)
+print("relation_we shape", r._keras_shape)
 
-# InputEmbeddingAttention get Matrix Q=S*A, need return A TODO
+# step3. InputEmbeddingAttention get Matrix Q=S*A, need return A TODO
+print("step3. InputEmbeddingAttention")
 attention_diag = TCAInputEmbeddingAttention()([sentence_we, r]) # this is matrix attention_diag
-# dropout = Dropout(0.2)(we)
+print("attention_diag shape", attention_diag._keras_shape)
 
+# step4. fuse attention
+print("step4. fuse attention")
 q_layer = merge([sentence_we, attention_diag], mode='mul')
+print("q_layer shape", q_layer._keras_shape)
 # q_layer = Dot(sentence_we, attention_diag) # check it
 
-z_layer = TCAContextEmbedding(context_size=3)(q_layer) # slide window to get embedding, this is matrix Z
-
+# step5. Conv1D
+print("step5. Conv1D")
 # Sentence Representation, using the context
-c_layer = Conv1D(filters, kernel_size, padding='same', strides=1)(z_layer)
+c_layer = Conv1D(filters, kernel_size, padding='same', strides=1)(q_layer)
 c_layer = Activation(activation='tanh')(c_layer)
+print("c_layer", c_layer._keras_shape)
 
 # direct Max-P
 o_s = GlobalMaxPooling1D()(c_layer) # O_s  sentence representation dim, dim is filters size
-
-if concat_pooling:
-    avg_pool = GlobalAveragePooling1D()(c_layer)
-    o_s = concatenate([avg_pool, o_s])
 print("o_s-shape", o_s) # (?, 1000)
 # cal score, there's diff, using (oS)⊤Ur #
 zeta = TCAScoringLayer()([o_s, r])
