@@ -42,8 +42,7 @@ input = Input(shape=(maxlen,))
 print("input-shape", input._keras_shape)
 print("sentence-input_tensor-shape", input._keras_shape, "type", type(input))
 if use_pretrain:
-    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/",
-                                           dim=embedding_dims, max_vocab=max_features)
+    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/", dim=embedding_dims, max_vocab=max_features)
     sentence_matrix = Embedding(max_features, embedding_dims, input_length=maxlen, weights=[embedding_matrix], trainable=True)(input)
 else:
     sentence_matrix = Embedding(max_features, embedding_dims, input_length=maxlen, )(input)
