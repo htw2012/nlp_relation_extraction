@@ -6,7 +6,7 @@ author= "huangtw"
 mtime= 2018/3/16
 """
 
-from keras.layers import Dense, Dropout, Activation, initializers, regularizers, constraints, concatenate
+from keras.layers import concatenate
 from keras import layers
 from keras import backend as K
 from keras import initializers
