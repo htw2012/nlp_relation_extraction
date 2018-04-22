@@ -10,15 +10,10 @@ from __future__ import print_function
 
 from keras import Model, Input
 from keras.preprocessing import sequence
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, initializers, regularizers, constraints, Lambda, RepeatVector, \
-    GlobalAveragePooling1D, concatenate, merge
-from keras.layers.merge import Dot
+from keras.layers import Activation, GlobalAveragePooling1D, concatenate, merge
 from keras.optimizers import Adagrad
 from keras.layers import Embedding
 from keras.layers import Conv1D, GlobalMaxPooling1D
-from keras import backend as K
-import numpy as np
 from models_layers_helper import TCAInputEmbeddingAttention,  TCAContextEmbedding, TCAScoringLayer
 from model_helper import limit_gpu_usage,print_best
 from sem_eval2010_loader import load_datas, load_word_embedding
@@ -41,6 +36,7 @@ relation_dim=80
 
 input = Input(shape=(maxlen,))
 print("input-shape", input._keras_shape)
+
 if use_pretrain:
     embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/",
                                            dim=embedding_dims, max_vocab=max_features)
