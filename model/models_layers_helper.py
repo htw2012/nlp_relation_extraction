@@ -816,15 +816,22 @@ class TCAScoringLayer(layers.Layer):
         m_x_dim = outputsent_shape[-1]  # 1000
         m_y_dim = relation_we_shape[-1]  # 80
         print("m_x_dim {}, m_y_dim {}".format(m_x_dim, m_y_dim))
-        self.attention_probs = self.add_weight(name='attention_probs', shape=(m_x_dim, m_y_dim), initializer='uniform',
-                                               trainable=True)
-        print("attention_probs", self.attention_probs)
+        self.U = self.add_weight(name='attention_probs', shape=(m_x_dim, m_y_dim), initializer='uniform',
+                                 trainable=True)
+        print("attention_probs", self.U)
         super(TCAScoringLayer, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, inputs):
         '''score的zeta计算得分公式为(oS)⊤Ur 计算值为一个得分'''
+        o_s = inputs[0]
+        r = inputs[1]
 
-        return inputs
+        tmp_ret = K.dot(o_s, self.U)
+        tmp_r = K.squeeze(r, axis=1)
+
+        ret = tmp_ret*tmp_r # not batch dot
+        print("TCAScoringLayer output", ret)
+        return ret
 
     def compute_output_shape(self, input_shape):
         print("compute_output_shape-input_shape", input_shape)

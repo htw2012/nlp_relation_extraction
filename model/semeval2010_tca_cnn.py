@@ -28,7 +28,6 @@ kernel_size=4
 hidden_dims=250
 epochs=100
 num_class=19
-concat_pooling=False
 pos_embedding_dims=80
 use_pretrain=False
 relation_dim=80
@@ -79,11 +78,15 @@ c_layer = Conv1D(filters, kernel_size, padding='same', strides=1)(q_layer)
 c_layer = Activation(activation='tanh')(c_layer)
 print("c_layer", c_layer._keras_shape)
 
-# direct Max-P
+# step6. direct Max-P
+print("step6. direct Max-P")
 o_s = GlobalMaxPooling1D()(c_layer) # O_s  sentence representation dim, dim is filters size
-print("o_s-shape", o_s) # (?, 1000)
-# cal score, there's diff, using (oS)⊤Ur #
+print("o_s-shape", o_s._keras_shape) # (?, 1000)
+
+print("step7. cal score, there's diff, using (oS)⊤Ur")
+# step7. cal score, there's diff, using (oS)⊤Ur #
 zeta = TCAScoringLayer()([o_s, r])
+print("zeta-shape", zeta._keras_shape)
 
 model = Model(inputs=[input, e1pos_input, e2pos_input, relation_input], outputs=zeta)
 adaGrad = Adagrad(lr=0.002) # 初始lr
