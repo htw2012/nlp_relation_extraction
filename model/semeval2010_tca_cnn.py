@@ -14,7 +14,7 @@ from keras.layers import Activation, concatenate, merge
 from keras.optimizers import Adagrad
 from keras.layers import Embedding
 from keras.layers import Conv1D, GlobalMaxPooling1D
-from models_layers_helper import TCAInputEmbeddingAttention, TCAScoringLayer
+from models_layers_helper import TCAInputEmbeddingAttention, TCAFuseInputAttention, TCAScoringLayer
 from model_helper import limit_gpu_usage
 from sem_eval2010_loader import load_datas, load_word_embedding
 limit_gpu_usage(0.5)
@@ -69,7 +69,8 @@ print("attention_diag shape", attention_diag._keras_shape)
 
 # step3.2-3. fuse attention
 print("step3.2-3. fuse attention")
-q_layer = merge([sentence_we, attention_diag], mode='mul') # Q=S*A
+q_layer = TCAFuseInputAttention()([sentence_we, attention_diag]) # Q=S*A
+# q_layer = merge([sentence_we, attention_diag], mode='dot') # Q=S*A
 print("q_layer shape", q_layer._keras_shape)
 
 

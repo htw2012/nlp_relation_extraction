@@ -691,7 +691,7 @@ class AttentionChannelWiseLayer(layers.Layer):
 class TCAInputEmbeddingAttention(layers.Layer):
     '''
     双线性的方式进行输入端的attention，计算方式为trans(w_i)*M*r 得到一个值的向量。
-    但是矩阵乘以右对角矩阵，相当于原始矩阵每行元素乘以向量的对应元素
+    但是矩阵乘以右对角矩阵，相当于原始矩阵每行元素乘以向量的对应元素. Note:还有bias
     '''
     def __init__(self,  **kwargs):
         super(TCAInputEmbeddingAttention, self).__init__(**kwargs)
@@ -719,13 +719,30 @@ class TCAInputEmbeddingAttention(layers.Layer):
         tmp_r_embedding = K.squeeze(relation_we, axis=1)
         zeta = K.batch_dot(tmp, tmp_r_embedding)
         attention = K.softmax(zeta) #
+        print("call attention-diag", attention)
         return attention
 
     def compute_output_shape(self, input_shape):
-        output_shape = input_shape[0]
+        output_shape = (None, input_shape[0][1])
         print("compute_output_shape-output_shape", output_shape)
         return output_shape
 
+class TCAFuseInputAttention(layers.Layer):
+    '''TCA融合信息的方法'''
+    def __init__(self,  **kwargs):
+        super(TCAFuseInputAttention, self).__init__(**kwargs)
+
+    def call(self, inputs):
+        sentence_we = inputs[0]
+        attention_diag = inputs[1]
+        ret = K.dot(attention_diag, sentence_we) # Later check
+        # ret = K.dot(sentence_we, attention_diag)
+        return ret
+
+    def compute_output_shape(self, input_shape):
+        output_shape = input_shape[0]
+        print("compute_output_shape-input_shape", output_shape)
+        return output_shape
 
 class TCAScoringLayer(layers.Layer):
     '''双线性的方式进行score得分'''
