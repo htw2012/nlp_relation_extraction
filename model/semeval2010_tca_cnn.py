@@ -10,12 +10,12 @@ from __future__ import print_function
 
 from keras import Model, Input
 from keras.preprocessing import sequence
-from keras.layers import Activation, GlobalAveragePooling1D, concatenate, merge
+from keras.layers import Activation, concatenate, merge
 from keras.optimizers import Adagrad
 from keras.layers import Embedding
 from keras.layers import Conv1D, GlobalMaxPooling1D
-from models_layers_helper import TCAInputEmbeddingAttention,  TCAContextEmbedding, TCAScoringLayer
-from model_helper import limit_gpu_usage,print_best
+from models_layers_helper import TCAInputEmbeddingAttention, TCAScoringLayer
+from model_helper import limit_gpu_usage
 from sem_eval2010_loader import load_datas, load_word_embedding
 limit_gpu_usage(0.5)
 
@@ -32,8 +32,8 @@ pos_embedding_dims=80
 use_pretrain=False
 relation_dim=80
 
-# step1. build sentence embedding
-print("step1. build sentence embedding")
+# 3.1 Input Representation
+print("step3.1 Input Representation ...")
 input = Input(shape=(maxlen,))
 print("input-shape", input._keras_shape)
 if use_pretrain:
@@ -53,38 +53,40 @@ print("entity2_pos_we", entity2_pos_we._keras_shape)
 sentence_we = concatenate([we, entity1_pos_we, entity2_pos_we], axis=-1) # this is matrix S
 print("sentence_we", sentence_we._keras_shape) # shape=(?, 85, 460)
 
-# step2. build relation embedding
-print("step2. build relation embedding")
+
+# 3.2 Input Attention
+print("3.2 Input Attention")
+print("step3.2-1. build relation embedding")
 relation_input = Input(shape=(1,))
 relation_we = Embedding(num_class, relation_dim, input_length=1)
 r = relation_we(relation_input)
 print("relation_we shape", r._keras_shape)
 
-# step3. InputEmbeddingAttention get Matrix Q=S*A, need return A TODO
-print("step3. InputEmbeddingAttention")
+# step3.2-2. InputEmbeddingAttention get Matrix Q=S*A, need return A
+print("step3.2-2. InputEmbeddingAttention")
 attention_diag = TCAInputEmbeddingAttention()([sentence_we, r]) # this is matrix attention_diag
 print("attention_diag shape", attention_diag._keras_shape)
 
-# step4. fuse attention
-print("step4. fuse attention")
-q_layer = merge([sentence_we, attention_diag], mode='mul')
+# step3.2-3. fuse attention
+print("step3.2-3. fuse attention")
+q_layer = merge([sentence_we, attention_diag], mode='mul') # Q=S*A
 print("q_layer shape", q_layer._keras_shape)
-# q_layer = Dot(sentence_we, attention_diag) # check it
 
-# step5. Conv1D
-print("step5. Conv1D")
+
+# step 3.3 Sentence Representation
+print("step 3.3 Sentence Representation")
+print("step 3.3.1 Conv1D...")
 # Sentence Representation, using the context
 c_layer = Conv1D(filters, kernel_size, padding='same', strides=1)(q_layer)
 c_layer = Activation(activation='tanh')(c_layer)
 print("c_layer", c_layer._keras_shape)
 
-# step6. direct Max-P
-print("step6. direct Max-P")
+print("step 3.3.2 sentence representation (by GlobalMaxPlooling)")
 o_s = GlobalMaxPooling1D()(c_layer) # O_s  sentence representation dim, dim is filters size
 print("o_s-shape", o_s._keras_shape) # (?, 1000)
 
-print("step7. cal score, there's diff, using (oS)⊤Ur")
-# step7. cal score, there's diff, using (oS)⊤Ur #
+print("step 3.4 Scoring")
+# step 3.4. cal score, there's diff, using (oS)⊤Ur #
 zeta = TCAScoringLayer()([o_s, r])
 print("zeta-shape", zeta._keras_shape)
 

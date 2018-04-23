@@ -705,8 +705,8 @@ class TCAInputEmbeddingAttention(layers.Layer):
         m_x_dim = sent_we_shape[-1] # 260
         m_y_dim = relation_we_shape[-1] # 80
         print("m_x_dim {}, m_y_dim {}".format(m_x_dim, m_y_dim))
-        self.attention_probs = self.add_weight(name='attention_probs', shape=(m_x_dim, m_y_dim), initializer='uniform', trainable=True)
-        print("attention_probs", self.attention_probs)
+        self.M = self.add_weight(name='attention_probs', shape=(m_x_dim, m_y_dim), initializer='uniform', trainable=True)
+        print("input-M attention_probs", self.M)
         super(TCAInputEmbeddingAttention, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, inputs):
@@ -714,92 +714,17 @@ class TCAInputEmbeddingAttention(layers.Layer):
         sent_we = inputs[0] # (None, 85, 460)
         relation_we = inputs[1] # (None, 1, 80)
         print("sent_we {}, relation_we {}".format(sent_we, relation_we))
-        # tmp = sent_we*self.attention_probs # (None, 85, 460) * (460, 80)-> # (None, 85, 80)
-        # tmp = K.batch_dot(sent_we, self.attention_probs)
-        tmp = K.dot(sent_we, self.attention_probs)
+        tmp = K.dot(sent_we, self.M)
         print("tmp_value {}".format(tmp))
-
-        # blow line maybe is error
-        s_relation_we = K.squeeze(relation_we, axis=1)
-        print("s_relation_we {}".format(s_relation_we))
-
-        eta = K.dot(tmp, s_relation_we)
-        eta = K.max(eta, axis=-1)
-        # t_relation_we = K.transpose(relation_we) # shape=(80, 1, ?)
-        # print("t_relation_we {}".format(t_relation_we))
-        # eta = tmp * t_relation_we  # (None, 85, 80) * (1, 80)T
-        print("eta {}".format(eta))
-        eta = K.exp(eta)
-        alpha = eta/K.cast(K.sum(eta, axis=1, keepdims=True) + K.epsilon(), K.floatx())
-
-        attention = K.zeros_like(sent_we)
-        max_len = sent_we.shape[1]
-        we_dim = sent_we.shape[-1]
-        print("max-len", max_len, "type", type(max_len))
-        '''
-        for i in range(max_len): # 保持每一行元素值相等 TODO
-            print(i, alpha[:,i])
-            att_row = []
-            for j in range(we_dim):
-                att_row.append(alpha[:,i])
-            att_row = concatenate(att_row, axis=-1)
-            print("att_row", att_row)
-            attention[:,i,:] = att_row
-        '''
-
+        tmp_r_embedding = K.squeeze(relation_we, axis=1)
+        zeta = K.batch_dot(tmp, tmp_r_embedding)
+        attention = K.softmax(zeta) #
         return attention
-
 
     def compute_output_shape(self, input_shape):
         output_shape = input_shape[0]
         print("compute_output_shape-output_shape", output_shape)
         return output_shape
-
-
-class TCAContextEmbedding(layers.Layer):
-    '''Context的Embedding的扩充，仅仅是数据维度的扩充'''
-    def __init__(self, context_size=1, **kwargs):
-
-        self.context_size = context_size
-        super(TCAContextEmbedding, self).__init__(**kwargs)
-
-    def compute_output_shape(self, input_shape):
-        sent_len = input_shape[1]
-        output_dim = self.context_size * input_shape[2]
-        ret = (None, sent_len, output_dim)
-        print("compute_output_shape-after", ret) # n*k
-        return ret
-
-    def call(self, inputs):
-        '''使用padding的方式'''
-        print("inputs", inputs)
-        sent_we = inputs
-        max_len = sent_we.shape[1]  # using the max_len
-        # we_dim = sent_we.shape[2]
-        # 改变计算过程
-        context_wes = []
-        for i in range(max_len):
-            context_we = []
-            semi_wind_size = int(self.context_size / 2)
-            for j in reversed(range(semi_wind_size)):
-                # print("mid_we", mid_we)
-                first_we = sent_we[:, i - j, :] if i - j >= 0 else K.zeros_like(mid_we)
-                context_we.append(first_we)
-            mid_we = sent_we[:, i, :]
-            context_we.append(mid_we)
-
-            for j in range(semi_wind_size):
-                last_we = sent_we[:, i + j, :] if i + j < max_len else K.zeros_like(mid_we)
-                context_we.append(last_we)
-
-            context_we = concatenate(context_we, axis=-1)  # shape=(?, 150)
-            # print("context_we", context_we)
-            context_we_exp = K.expand_dims(context_we, axis=1)
-            # print("context_we_exp", context_we_exp)
-            context_wes.append(context_we_exp)
-        context_wes = concatenate(context_wes, axis=1)  # shape=(?, max_len, 150)
-        print("context_wes", context_wes)  # (?, 87, 150)
-        return context_wes
 
 
 class TCAScoringLayer(layers.Layer):
