@@ -78,7 +78,7 @@ print("q_layer shape", q_layer._keras_shape)
 print("step 3.3 Sentence Representation")
 print("step 3.3.1 Conv1D...")
 # Sentence Representation, using the context
-c_layer = Conv1D(filters, kernel_size, padding='same', strides=1)(q_layer)
+c_layer = Conv1D(filters, kernel_size, padding='valid', strides=1)(q_layer)
 c_layer = Activation(activation='tanh')(c_layer)
 print("c_layer", c_layer._keras_shape)
 
