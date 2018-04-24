@@ -32,6 +32,7 @@ pos_embedding_dims=80
 use_pretrain=True
 relation_dim=80
 
+print('Build model...')
 # 3.1 Input Representation
 print("step3.1 Input Representation ...")
 input = Input(shape=(maxlen,))
@@ -94,9 +95,8 @@ print("zeta-shape", zeta._keras_shape)
 model = Model(inputs=[input, e1pos_input, e2pos_input, relation_input], outputs=zeta)
 adaGrad = Adagrad(lr=0.002) # 初始lr
 model.compile(loss='categorical_hinge', optimizer=adaGrad, metrics=['accuracy'])  # TODO loss
-
 model.summary()
-# print("type", type(x_train))
+print("model-input", model.inputs, "model-outputs", model.outputs)
 print('Loading data...')
 train_file = "../data/semeval2010/TRAIN_FILE.TXT"
 test_file = "../data/semeval2010/TEST_FILE_FULL.TXT"
@@ -132,15 +132,13 @@ print('x_data_test shape:', x_test.shape)
 print('entity1_idx_test shape:', entity1_idx_test.shape)
 print('entity2_idx_test shape:', entity2_idx_test.shape)
 print('relation_test shape:', relation_test.shape)
-print('y_test shape:', y_test.shape)
-
-print('Build model...')
+print('y_test shape:', y_test.shape) # (2717,)
 
 ret = model.fit([x_train, entity1_idx_train, entity2_idx_train, relation_train], y_train,
                 batch_size=batch_size, epochs=epochs,
                 validation_data=([x_test, entity1_idx_test, entity2_idx_test, relation_test], y_test), verbose=1)
 y_pred = model.predict([x_test, entity1_idx_test, entity2_idx_test, relation_test])
-print("shape", y_pred.shape)
+print("y_pred-shape", y_pred.shape) #  (2717, 80)
 size = y_pred.shape[0]
 acc = 0
 for i in range(y_pred.shape):
