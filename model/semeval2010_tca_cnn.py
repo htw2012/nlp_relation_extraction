@@ -29,7 +29,7 @@ hidden_dims=250
 epochs=100
 num_class=19
 pos_embedding_dims=80
-use_pretrain=False
+use_pretrain=True
 relation_dim=80
 
 # 3.1 Input Representation
@@ -37,7 +37,7 @@ print("step3.1 Input Representation ...")
 input = Input(shape=(maxlen,))
 print("input-shape", input._keras_shape)
 if use_pretrain:
-    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="glove/", dim=embedding_dims, max_vocab=max_features)
+    embedding_matrix = load_word_embedding("../data/semeval2010/sem_eval2010_word.dict", BASE_DIR="../glove/", dim=embedding_dims, max_vocab=max_features)
     we = Embedding(max_features, embedding_dims, input_length=maxlen, weights=[embedding_matrix], trainable=True)(input)
 else:
     we = Embedding(max_features, embedding_dims, input_length=maxlen, )(input)
