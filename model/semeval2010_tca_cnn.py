@@ -133,6 +133,7 @@ print('entity1_idx_test shape:', entity1_idx_test.shape)
 print('entity2_idx_test shape:', entity2_idx_test.shape)
 print('relation_test shape:', relation_test.shape)
 print('y_test shape:', y_test.shape) # (2717,)
+print("y_test[0]", y_test[0])
 
 ret = model.fit([x_train, entity1_idx_train, entity2_idx_train, relation_train], y_train,
                 batch_size=batch_size, epochs=epochs,
