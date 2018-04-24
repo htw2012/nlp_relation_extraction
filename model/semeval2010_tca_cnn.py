@@ -6,7 +6,7 @@ author= "huangtw"
 mtime= 2018/3/15
 """
 
-from __future__ import print_function
+from __future__ import print_function,division
 
 from keras import Model, Input
 from keras.preprocessing import sequence
@@ -139,7 +139,16 @@ print('Build model...')
 ret = model.fit([x_train, entity1_idx_train, entity2_idx_train, relation_train], y_train,
                 batch_size=batch_size, epochs=epochs,
                 validation_data=([x_test, entity1_idx_test, entity2_idx_test, relation_test], y_test), verbose=1)
-print("ret", ret)
+y_pred = model.predict([x_test, entity1_idx_test, entity2_idx_test, relation_test])
+print("shape", y_pred.shape)
+size = y_pred.shape[0]
+acc = 0
+for i in range(y_pred.shape):
+    if int(y_pred[i]*num_class) == y_test[i]:
+       acc += 1
+print("acc", acc/size)
+
+
 
 
 
