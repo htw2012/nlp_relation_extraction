@@ -325,8 +325,9 @@ def load_data(train_file, max_len=200,  word_dict_file="data/sem_eval2010_x.dict
     if is_use_tca_cnn:
         sent2e1, sent2e2 = sentence2entity_position(samples, max_len)
         print("sent2e1-shape", sent2e1.shape)
-        Y_val = [y/19.0 for y in Y_data]
-        Y_val = np.array(Y_val).astype('float32')
+        Y_val = [y for y in Y_data]#[y/19.0 for y in Y_data]
+        Y_val = np.array(Y_val).astype('int32')
+        # Y_val = np.array(Y_val).astype('float32')
         # Y = [1] * len(Y_data)
         # Y_data = np.array(Y_data).astype('int32')
         Y_data = np.array(Y_data).astype('int32')
