@@ -326,6 +326,7 @@ def load_data(train_file, max_len=200,  word_dict_file="data/sem_eval2010_x.dict
         # Y = [1] * len(Y_data)
         Y = np.array(Y_data).astype('int32')
         Y_data = np.array(Y_data).astype('int32')
+        print("Y_data-3", Y_data[:3])
         X_data = [X_data, sent2e1, sent2e2, Y_data]
         return (X_data, Y)
 
@@ -432,7 +433,7 @@ def load_word_embedding(word_file, BASE_DIR="/Users/tongwen/lab/data/glove/glove
     '''
     import os
     import json
-    print('Indexing word vectors.')
+    # print('Indexing word vectors.')
     embeddings_index = {} # 所有的WE
     with open(word_file) as fr, open(os.path.join(BASE_DIR, 'glove.6B.%dd.txt'%dim)) as f:
         # step1. 获取所有的词语
