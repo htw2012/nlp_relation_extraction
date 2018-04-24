@@ -5,10 +5,12 @@ title= "SemEval2010的数据的评估"
 author= "huangtw"
 mtime= 2018/3/10
 """
+from __future__ import division
 import json
 import os
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
+
 
 class WordItem(object):
     def __init__(self, word, positions=[]):
@@ -323,12 +325,15 @@ def load_data(train_file, max_len=200,  word_dict_file="data/sem_eval2010_x.dict
     if is_use_tca_cnn:
         sent2e1, sent2e2 = sentence2entity_position(samples, max_len)
         print("sent2e1-shape", sent2e1.shape)
+        Y_val = [y/19.0 for y in Y_data]
+        Y_val = np.array(Y_val).astype('float32')
         # Y = [1] * len(Y_data)
-        Y = np.array(Y_data).astype('int32')
+        # Y_data = np.array(Y_data).astype('int32')
         Y_data = np.array(Y_data).astype('int32')
         print("Y_data-3", Y_data[:3])
         X_data = [X_data, sent2e1, sent2e2, Y_data]
-        return (X_data, Y)
+        print("Y_val-3", Y_val[:3])
+        return (X_data, Y_val)
 
     Y_data = np.array(Y_data, dtype=object)
     enc = OneHotEncoder()
